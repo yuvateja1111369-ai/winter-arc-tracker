@@ -114,9 +114,11 @@ if "tracker_df" not in st.session_state:
             if res.data:
                 for row in res.data:
                     h_name = row["name"]
-                    loaded_habits.append(h_name)
-                    if row.get("progress_json"):
-                        progress_map[h_name] = json.loads(row["progress_json"])
+                    # Exclude sleep prefix from main habit list
+                    if not h_name.startswith("SLEEP_"):
+                        loaded_habits.append(h_name)
+                        if row.get("progress_json"):
+                            progress_map[h_name] = json.loads(row["progress_json"])
         except Exception:
             pass
             
@@ -133,18 +135,20 @@ if "tracker_df" not in st.session_state:
     df.insert(0, "Habit Name", habits_list)
     st.session_state.tracker_df = df
 
-# --- LOAD SLEEP RECORDS FROM SUPABASE ---
+# --- LOAD SLEEP RECORDS FROM SUPABASE HABITS TABLE ---
 if "sleep_df" not in st.session_state:
     sleep_rows = ["10 hrs", "8 hrs", "6 hrs", "4 hrs", "2 hrs"]
     loaded_sleep = {}
     if user_id:
         try:
-            res = supabase.table("sleep_records").select("sleep_hours, progress_json").eq("user_id", user_id).execute()
+            res = supabase.table("habits").select("name, progress_json").eq("user_id", user_id).execute()
             if res.data:
                 for row in res.data:
-                    s_hours = row["sleep_hours"]
-                    if row.get("progress_json"):
-                        loaded_sleep[s_hours] = json.loads(row["progress_json"])
+                    h_name = row["name"]
+                    if h_name.startswith("SLEEP_"):
+                        s_hours = h_name.replace("SLEEP_", "")
+                        if row.get("progress_json"):
+                            loaded_sleep[s_hours] = json.loads(row["progress_json"])
         except Exception:
             pass
             
@@ -235,24 +239,29 @@ edited_sleep_df = st.data_editor(
 )
 st.session_state.sleep_df = edited_sleep_df
 
-# --- HANDLE MANUAL SAVE BUTTON CLICK (SAVES BOTH HABITS & SLEEP) ---
+# --- HANDLE MANUAL SAVE BUTTON CLICK (SAVES BOTH HABITS & SLEEP TO HABITS TABLE) ---
 if save_clicked and user_id:
     try:
         # Save Habits
         for _, row in st.session_state.tracker_df.iterrows():
             habit_name = row["Habit Name"]
             day_dict = {day: bool(row[day]) for day in days}
-            supabase.table("habits").update({"progress_json": json.dumps(day_dict)}).eq("user_id", user_id).eq("name", habit_name).execute()
+            supabase.table("habits").upsert({
+                "user_id": user_id,
+                "name": habit_name,
+                "progress_json": json.dumps(day_dict)
+            }, on_conflict="user_id,name").execute()
             
-        # Save Sleep Records
+        # Save Sleep Records (stored with SLEEP_ prefix in habits table)
         for _, row in st.session_state.sleep_df.iterrows():
             sleep_hours = row["Sleep Hours"]
+            db_name = f"SLEEP_{sleep_hours}"
             day_dict = {day: bool(row[day]) for day in days}
-            supabase.table("sleep_records").upsert({
+            supabase.table("habits").upsert({
                 "user_id": user_id,
-                "sleep_hours": sleep_hours,
+                "name": db_name,
                 "progress_json": json.dumps(day_dict)
-            }, on_conflict="user_id,sleep_hours").execute()
+            }, on_conflict="user_id,name").execute()
             
         st.success("⚡ ALL PROGRESS & FATIGUE RECOVERY LOCKED IN CLOUD!")
     except Exception as e:
