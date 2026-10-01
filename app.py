@@ -95,7 +95,7 @@ LOCKED_RULES = [
 
 days = [str(i) for i in range(1, 32)]
 
-# --- LOAD DATA FROM SUPABASE ON STARTUP ---
+# --- LOAD HABITS & PROGRESS FROM SUPABASE ---
 if "tracker_df" not in st.session_state:
     initial_habits = [
         "WORK OUT 5-6 TIMES A WEEK", "DRINK 1 GALLON OF WATER DAILY", 
@@ -106,28 +106,32 @@ if "tracker_df" not in st.session_state:
         "NO EXCUSES", "NOTHING BUT 90 DAYS OF PURE DISCIPLINE"
     ]
     
-    loaded_df = None
+    loaded_habits = []
+    progress_map = {}
     if user_id:
         try:
-            res = supabase.table("tracker_data").select("*").eq("user_id", user_id).execute()
+            res = supabase.table("habits").select("name, progress_json").eq("user_id", user_id).execute()
             if res.data:
-                rows = []
-                for item in res.data:
-                    row_data = {"Habit Name": item["habit_name"]}
-                    day_vals = json.loads(item["progress_json"])
-                    row_data.update(day_vals)
-                    rows.append(row_data)
-                loaded_df = pd.DataFrame(rows)
+                for row in res.data:
+                    h_name = row["name"]
+                    loaded_habits.append(h_name)
+                    if row.get("progress_json"):
+                        progress_map[h_name] = json.loads(row["progress_json"])
         except Exception:
             pass
             
-    if loaded_df is not None and not loaded_df.empty:
-        st.session_state.tracker_df = loaded_df
-    else:
-        grid_data = {day: [False] * len(initial_habits) for day in days}
-        df = pd.DataFrame(grid_data)
-        df.insert(0, "Habit Name", initial_habits)
-        st.session_state.tracker_df = df
+    habits_list = loaded_habits if loaded_habits else initial_habits
+    
+    grid_data = {}
+    for day in days:
+        day_vals = []
+        for h in habits_list:
+            day_vals.append(progress_map.get(h, {}).get(day, False))
+        grid_data[day] = day_vals
+        
+    df = pd.DataFrame(grid_data)
+    df.insert(0, "Habit Name", habits_list)
+    st.session_state.tracker_df = df
 
 if "sleep_df" not in st.session_state:
     sleep_rows = ["10 hrs", "8 hrs", "6 hrs", "4 hrs", "2 hrs"]
@@ -156,7 +160,13 @@ with col1:
                     new_row[str(i)] = False
                 new_df = pd.DataFrame([new_row])
                 st.session_state.tracker_df = pd.concat([st.session_state.tracker_df, new_df], ignore_index=True)
-                st.success(f"Added: {new_habit}. Click SAVE PROGRESS to lock it in!")
+                
+                if user_id:
+                    try:
+                        supabase.table("habits").insert({"user_id": user_id, "name": new_habit, "progress_json": "{}"}).execute()
+                    except Exception as err:
+                        st.error(f"Cloud sync error: {err}")
+                st.success(f"Added: {new_habit}!")
                 st.rerun()
 
 with col2:
@@ -169,7 +179,7 @@ with col2:
             st.session_state.tracker_df = st.session_state.tracker_df[st.session_state.tracker_df["Habit Name"] != habit_to_remove]
             if user_id:
                 try:
-                    supabase.table("tracker_data").delete().eq("user_id", user_id).eq("habit_name", habit_to_remove).execute()
+                    supabase.table("habits").delete().eq("user_id", user_id).eq("name", habit_to_remove).execute()
                 except Exception:
                     pass
             st.rerun()
@@ -203,12 +213,8 @@ if save_clicked and user_id:
             habit_name = row["Habit Name"]
             day_dict = {day: bool(row[day]) for day in days}
             
-            payload = {
-                "user_id": user_id,
-                "habit_name": habit_name,
-                "progress_json": json.dumps(day_dict)
-            }
-            supabase.table("tracker_data").upsert(payload, on_conflict="user_id,habit_name").execute()
+            # Update the existing habit record with its checkbox JSON
+            supabase.table("habits").update({"progress_json": json.dumps(day_dict)}).eq("user_id", user_id).eq("name", habit_name).execute()
             
         st.success("⚡ PROGRESS SYNCED & LOCKED IN CLOUD DATABASE!")
     except Exception as e:
