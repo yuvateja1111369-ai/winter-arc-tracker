@@ -18,41 +18,68 @@ def init_supabase():
 
 supabase: Client = init_supabase()
 
-# --- AUTHENTICATION STATE & SIDEBAR LOGIN ---
+# --- AUTHENTICATION STATE & GOOGLE OAUTH SIDEBAR ---
 if "user_id" not in st.session_state:
     st.session_state.user_id = None
     st.session_state.user_email = ""
 
+# Check if Supabase redirected back with access tokens in query parameters/hash
+query_params = st.query_params
+if "access_token" in query_params and not st.session_state.user_id:
+    # If tokens are passed back via query params, we can capture the user session
+    try:
+        access_token = query_params["access_token"]
+        refresh_token = query_params.get("refresh_token", "")
+        session_res = supabase.auth.set_session(access_token, refresh_token)
+        if session_res.user:
+            st.session_state.user_id = session_res.user.id
+            st.session_state.user_email = session_res.user.email
+            st.rerun()
+    except Exception as e:
+        pass
+
 st.sidebar.title("🛡️ SYSTEM ACCESS")
 
 if not st.session_state.user_id:
-    auth_mode = st.sidebar.radio("Authentication", ["Sign In", "Register New Hunter"])
-    input_email = st.sidebar.text_input("Hunter Email")
-    input_password = st.sidebar.text_input("Password", type="password")
+    st.sidebar.markdown("### Authentication Required")
+    st.sidebar.markdown("Link your Google account to initialize your personal System instance.")
     
-    if st.sidebar.button("AUTHENTICATE", use_container_width=True):
-        try:
-            if auth_mode == "Sign In":
-                res = supabase.auth.sign_in_with_password({"email": input_email, "password": input_password})
-            else:
-                res = supabase.auth.sign_up({"email": input_email, "password": input_password})
+    # Generate Google OAuth login URL from Supabase
+    try:
+        # Note: Replace with your actual deployed Streamlit URL or localhost for testing
+        redirect_url = "https://winter-arc-tracker-v6h3ewjofgpu3opszhoj.streamlit.app"
+        
+        oauth_res = supabase.auth.sign_in_with_oauth({
+            "provider": "google",
+            "options": {
+                "redirect_to": redirect_url
+            }
+        })
+        google_login_url = oauth_res.url
+        
+        # Render a sleek button linking to Google Auth
+        st.sidebar.markdown(
+            f"""
+            <a href="{google_login_url}" target="_self" style="text-decoration: none;">
+                <div style="background-color: #ffffff; color: #000000; padding: 10px; text-align: center; font-weight: bold; border-radius: 4px; border: 1px solid #00e5ff; box-shadow: 0 0 10px rgba(0,229,255,0.3);">
+                    🌐 SIGN IN WITH GOOGLE
+                </div>
+            </a>
+            """,
+            unsafe_allow_html=True
+        )
+    except Exception as e:
+        st.sidebar.error(f"OAuth initialization error: {e}")
             
-            if res.user:
-                st.session_state.user_id = res.user.id
-                st.session_state.user_email = input_email
-                st.success("Access Granted!")
-                st.rerun()
-        except Exception as e:
-            st.sidebar.error(f"Access Denied: {e}")
-            
-    st.info("Please sign in or register to access your personal system records.")
+    st.info("Please authenticate with Google to access your isolated system records.")
     st.stop() # Halts app rendering until authenticated
 else:
     user_id = st.session_state.user_id
-    st.sidebar.success(f"Logged in as:\n{st.session_state.user_email}")
+    st.sidebar.success(f"Hunter Connected:\n{st.session_state.user_email}")
     if st.sidebar.button("LOG OUT", use_container_width=True):
         st.session_state.user_id = None
         st.session_state.user_email = ""
+        st.query_params.clear()
         try:
             supabase.auth.sign_out()
         except:
