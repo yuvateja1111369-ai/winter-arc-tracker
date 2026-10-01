@@ -33,7 +33,7 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- SCROLLING, MOBILE-FRIENDLY & BRIGHT SLIDESHOW CSS ---
+# --- TRUE SCROLLING, MOBILE-FRIENDLY & BRIGHT SLIDESHOW CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
@@ -52,8 +52,8 @@ st.markdown("""
         100% { background-image: linear-gradient(rgba(5, 5, 10, 0.35), rgba(5, 5, 10, 0.45)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
     }
 
-    /* Targets Streamlit's main scrolling container so background moves naturally */
-    [data-testid="stAppViewContainer"] {
+    /* Applies background directly to Streamlit's scrolling content area so it moves with the page */
+    [data-testid="stMain"] {
         background-size: cover;
         background-position: center top;
         background-repeat: no-repeat;
