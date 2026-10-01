@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from supabase import create_client, Client
 
-# Configure the page for responsiveness
+# Configure the page
 st.set_page_config(page_title="System: Winter Arc", page_icon="🗡️", layout="wide")
 
 # --- SUPABASE CONNECTION SETUP ---
@@ -33,36 +33,37 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- TRUE SCROLLING SLIDESHOW & MOBILE-FRIENDLY CSS ---
+# --- FIXED 4K FULL-SCREEN SLIDESHOW (NO SCROLLING) CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
 
-    html, body, [class*="css"] {
+    /* Lock body and HTML viewports to prevent any page scrolling */
+    html, body {
+        height: 100vh;
+        overflow: hidden !important;
         font-family: 'Rajdhani', sans-serif !important;
         color: #00e5ff !important;
     }
 
     @keyframes slideShow {
-        0% { background-image: linear-gradient(rgba(5, 5, 10, 0.3), rgba(5, 5, 10, 0.4)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
-        20% { background-image: linear-gradient(rgba(5, 5, 10, 0.3), rgba(5, 5, 10, 0.4)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg2.jpg.jpg'); }
-        40% { background-image: linear-gradient(rgba(5, 5, 10, 0.3), rgba(5, 5, 10, 0.4)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg3.jpg.jpg'); }
-        60% { background-image: linear-gradient(rgba(5, 5, 10, 0.3), rgba(5, 5, 10, 0.4)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg4.jpg.jpg'); }
-        80% { background-image: linear-gradient(rgba(5, 5, 10, 0.3), rgba(5, 5, 10, 0.4)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg5.jpg.jpg'); }
-        100% { background-image: linear-gradient(rgba(5, 5, 10, 0.3), rgba(5, 5, 10, 0.4)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
+        0% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
+        20% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg2.jpg.jpg'); }
+        40% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg3.jpg.jpg'); }
+        60% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg4.jpg.jpg'); }
+        80% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg5.jpg.jpg'); }
+        100% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
     }
 
-    /* Force Streamlit's main content wrapper to handle natural scrolling with the background */
-    [data-testid="stMain"] {
-        background-size: cover !important;
-        background-position: center top !important;
-        background-repeat: repeat-y !important;
-        background-attachment: scroll !important;
-        animation: slideShow 900s infinite;
-    }
-
+    /* Fixed full-screen viewport container with crisp 4K cover sizing */
     .stApp {
-        background-color: #05050a !important;
+        background-size: cover !important;
+        background-position: center center !important;
+        background-repeat: no-repeat !important;
+        background-attachment: fixed !important;
+        animation: slideShow 900s infinite;
+        height: 100vh !important;
+        overflow-y: auto !important; /* Internal sleek container scroll if needed, but background stays locked */
     }
 
     h1 {
