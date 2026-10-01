@@ -33,7 +33,7 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- FULLY RESPONSIVE DEVICE-ADAPTIVE CSS ---
+# --- DESKTOP 'FIT' (CONTAIN) & RESPONSIVE SLIDESHOW CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
@@ -43,6 +43,7 @@ st.markdown("""
         overflow: hidden !important;
         font-family: 'Rajdhani', sans-serif !important;
         color: #00e5ff !important;
+        background-color: #05050a !important;
     }
 
     @keyframes slideShow {
@@ -53,25 +54,19 @@ st.markdown("""
         100% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
     }
 
-    /* Base responsive background styling for Laptops & Desktops */
+    /* Desktop & Laptop: Set to 'contain' so the image fits fully without cropping */
     .stApp {
-        background-size: cover !important;
+        background-size: contain !important;
         background-position: center center !important;
         background-repeat: no-repeat !important;
         background-attachment: fixed !important;
         animation: slideShow 900s infinite;
         height: 100vh !important;
         overflow-y: auto !important;
+        background-color: #05050a !important;
     }
 
-    /* Tablet adjustment */
-    @media (max-width: 1024px) {
-        .stApp {
-            background-size: cover !important;
-        }
-    }
-
-    /* Mobile adjustment: ensures the image fits portrait/landscape screens cleanly */
+    /* Mobile & Tablet adjustment */
     @media (max-width: 768px) {
         .stApp {
             background-size: 100% 100% !important;
