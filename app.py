@@ -112,7 +112,7 @@ LOCKED_RULES = [
     "WORK OUT 5-6 TIMES A WEEK", "DRINK 1 GALLON OF WATER DAILY", 
     "GET 8 HOURS OF SLEEP DAILY", "MAX OUT YOUR PROTEIN DAILY", 
     "READ 10 PAGES DAILY", "COLD SHOWERS DAILY", "10K STEPS DAILY", 
-    "WAKE UP BY 5 AM", "NO EXCUSES", "NOTHING BUT 90 DAYS OF PURE DISCIPLINE"
+    "WAKE UP BY 5 AM", "NO EXCUSES"
 ]
 
 date_range = pd.date_range(start="2026-10-01", end="2026-12-31")
@@ -126,7 +126,7 @@ if "tracker_df" not in st.session_state:
         "READ 10 PAGES DAILY", "COLD SHOWERS DAILY", "10K STEPS DAILY", 
         "NO FAST FOOD", "NO SUGAR", "NO ALCOHOL", "NO DISTRACTIONS", 
         "WAKE UP BY 5 AM", "GO TO SLEEP BY 8 PM", "FOCUS ON YOURSELF", 
-        "NO EXCUSES", "NOTHING BUT 90 DAYS OF PURE DISCIPLINE"
+        "NO EXCUSES"
     ]
     
     loaded_habits = []
@@ -137,6 +137,14 @@ if "tracker_df" not in st.session_state:
             if res.data:
                 for row in res.data:
                     h_name = row["name"]
+                    # Ignore the removed habit if it still exists in Supabase database
+                    if h_name == "NOTHING BUT 90 DAYS OF PURE DISCIPLINE":
+                        try:
+                            supabase.table("habits").delete().eq("user_id", user_id).eq("name", h_name).execute()
+                        except Exception:
+                            pass
+                        continue
+                        
                     if not h_name.startswith("SLEEP_"):
                         loaded_habits.append(h_name)
                         if row.get("progress_json"):
