@@ -133,9 +133,28 @@ if "tracker_df" not in st.session_state:
     df.insert(0, "Habit Name", habits_list)
     st.session_state.tracker_df = df
 
+# --- LOAD SLEEP RECORDS FROM SUPABASE ---
 if "sleep_df" not in st.session_state:
     sleep_rows = ["10 hrs", "8 hrs", "6 hrs", "4 hrs", "2 hrs"]
-    sleep_data = {day: [False] * len(sleep_rows) for day in days}
+    loaded_sleep = {}
+    if user_id:
+        try:
+            res = supabase.table("sleep_records").select("sleep_hours, progress_json").eq("user_id", user_id).execute()
+            if res.data:
+                for row in res.data:
+                    s_hours = row["sleep_hours"]
+                    if row.get("progress_json"):
+                        loaded_sleep[s_hours] = json.loads(row["progress_json"])
+        except Exception:
+            pass
+            
+    sleep_data = {}
+    for day in days:
+        day_vals = []
+        for row_name in sleep_rows:
+            day_vals.append(loaded_sleep.get(row_name, {}).get(day, False))
+        sleep_data[day] = day_vals
+        
     sleep_df = pd.DataFrame(sleep_data)
     sleep_df.insert(0, "Sleep Hours", sleep_rows)
     st.session_state.sleep_df = sleep_df
@@ -206,17 +225,36 @@ edited_df = st.data_editor(
 
 st.session_state.tracker_df = edited_df
 
-# --- HANDLE MANUAL SAVE BUTTON CLICK ---
+# --- SLEEP SECTION ---
+st.subheader("🌙 FATIGUE RECOVERY")
+edited_sleep_df = st.data_editor(
+    st.session_state.sleep_df,
+    hide_index=True,
+    use_container_width=True,
+    column_config={"Sleep Hours": st.column_config.Column(disabled=True)}
+)
+st.session_state.sleep_df = edited_sleep_df
+
+# --- HANDLE MANUAL SAVE BUTTON CLICK (SAVES BOTH HABITS & SLEEP) ---
 if save_clicked and user_id:
     try:
+        # Save Habits
         for _, row in st.session_state.tracker_df.iterrows():
             habit_name = row["Habit Name"]
             day_dict = {day: bool(row[day]) for day in days}
-            
-            # Update the existing habit record with its checkbox JSON
             supabase.table("habits").update({"progress_json": json.dumps(day_dict)}).eq("user_id", user_id).eq("name", habit_name).execute()
             
-        st.success("⚡ PROGRESS SYNCED & LOCKED IN CLOUD DATABASE!")
+        # Save Sleep Records
+        for _, row in st.session_state.sleep_df.iterrows():
+            sleep_hours = row["Sleep Hours"]
+            day_dict = {day: bool(row[day]) for day in days}
+            supabase.table("sleep_records").upsert({
+                "user_id": user_id,
+                "sleep_hours": sleep_hours,
+                "progress_json": json.dumps(day_dict)
+            }, on_conflict="user_id,sleep_hours").execute()
+            
+        st.success("⚡ ALL PROGRESS & FATIGUE RECOVERY LOCKED IN CLOUD!")
     except Exception as e:
         st.error(f"Save failed: {e}")
 
@@ -247,14 +285,3 @@ fig.update_traces(
 )
 
 st.plotly_chart(fig, use_container_width=True)
-
-st.divider()
-
-# --- SLEEP SECTION ---
-st.subheader("🌙 FATIGUE RECOVERY")
-st.session_state.sleep_df = st.data_editor(
-    st.session_state.sleep_df,
-    hide_index=True,
-    use_container_width=True,
-    column_config={"Sleep Hours": st.column_config.Column(disabled=True)}
-)
