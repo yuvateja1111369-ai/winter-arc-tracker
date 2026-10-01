@@ -18,7 +18,6 @@ def init_supabase():
 
 supabase: Client = init_supabase()
 
-# Auto-authenticate the test user for session persistence
 @st.cache_resource
 def authenticate_user():
     try:
@@ -28,12 +27,11 @@ def authenticate_user():
         })
         return res.user.id
     except Exception as e:
-        st.error(f"System Authentication Failed: {e}")
         return None
 
 user_id = authenticate_user()
 
-# --- FLOATING SHADOW KNIGHT & THEME CSS ---
+# --- 3D INTERACTIVE COMPANION & APP CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
@@ -65,66 +63,15 @@ st.markdown("""
         background-color: #05050a !important;
     }
 
-    /* --- FLOATING SHADOW KNIGHT COMPANION STYLES --- */
-    @keyframes floatAnimation {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-        100% { transform: translateY(0px); }
-    }
-
-    .shadow-companion {
+    /* Transparent 3D Canvas Layer spanning the entire window */
+    #canvas3d-container {
         position: fixed;
-        bottom: 20px;
-        right: 20px;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none; /* Lets clicks pass through to app, but JS can track cursor */
         z-index: 99999;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        animation: floatAnimation 4s ease-in-out infinite;
-        pointer-events: none;
-    }
-
-    .shadow-avatar {
-        width: 90px;
-        height: 90px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid #00e5ff;
-        box-shadow: 0 0 15px #00e5ff, inset 0 0 10px #8a2be2;
-        background-color: #000;
-        pointer-events: auto;
-    }
-
-    .shadow-bubble {
-        margin-bottom: 8px;
-        background: rgba(5, 5, 10, 0.85);
-        border: 1px solid #00e5ff;
-        color: #00e5ff;
-        padding: 5px 10px;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
-        white-space: nowrap;
-        pointer-events: auto;
-    }
-
-    @media (max-width: 768px) {
-        .stApp {
-            background-size: 100% 100% !important;
-        }
-        .block-container {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
-        }
-        .shadow-companion {
-            bottom: 10px;
-            right: 10px;
-        }
-        .shadow-avatar {
-            width: 70px;
-            height: 70px;
-        }
     }
 
     h1 {
@@ -167,11 +114,69 @@ st.markdown("""
     }
 </style>
 
-<!-- Floating Shadow Knight Widget Injection -->
-<div class="shadow-companion">
-    <div class="shadow-bubble">"My Liege, fulfill your daily quests."</div>
-    <img src="https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/companion.png.jpeg" class="shadow-avatar" alt="Shadow Guard">
-</div>
+<!-- Load Three.js library for 3D rendering in browser -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<div id="canvas3d-container"></div>
+
+<script>
+    // Initialize Three.js 3D Scene for the roaming companion
+    const container = document.getElementById('canvas3d-container');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+
+    // Add lighting for the 3D model
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    scene.add(ambientLight);
+    const pointLight = new THREE.PointLight(0x00e5ff, 2, 50);
+    pointLight.position.set(0, 5, 5);
+    scene.add(pointLight);
+
+    // Temporary placeholder 3D glowing character mesh (representing Igris until a custom 3D .glb file is linked)
+    const geometry = new THREE.BoxGeometry(1, 2, 0.5);
+    const material = new THREE.MeshStandardMaterial({ color: 0x002b55, emissive: 0x00e5ff, roughness: 0.3 });
+    const companion3D = new THREE.Mesh(geometry, material);
+    scene.add(companion3D);
+
+    camera.position.z = 5;
+
+    // Mouse tracking variables
+    let mouseX = 0, mouseY = 0;
+    let targetX = 0, targetY = 0;
+
+    window.addEventListener('mousemove', (event) => {
+        mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+        mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+    });
+
+    // Animation Loop: Makes the 3D model roam and follow mouse cursor fluidly
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Smoothly glide toward mouse coordinates
+        targetX = mouseX * 3;
+        targetY = mouseY * 2;
+        companion3D.position.x += (targetX - companion3D.position.x) * 0.05;
+        companion3D.position.y += (targetY - companion3D.position.y) * 0.05;
+
+        // Idle floating/rotating animation
+        companion3D.rotation.y += 0.01;
+
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // Handle screen resizing
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
 """, unsafe_allow_html=True)
 
 st.title("🗡 SYSTEM: PLAYER AWAKENING")
@@ -334,7 +339,6 @@ st.session_state.sleep_df = edited_sleep_df
 # --- HANDLE MANUAL SAVE BUTTON CLICK ---
 if save_clicked and user_id:
     try:
-        # Save Habits
         for _, row in st.session_state.tracker_df.iterrows():
             habit_name = row["Habit Name"]
             day_dict = {day: bool(row[day]) for day in days}
@@ -345,7 +349,6 @@ if save_clicked and user_id:
             else:
                 supabase.table("habits").insert({"user_id": user_id, "name": habit_name, "progress_json": json.dumps(day_dict)}).execute()
             
-        # Save Sleep Records
         for _, row in st.session_state.sleep_df.iterrows():
             sleep_hours = row["Sleep Hours"]
             db_name = f"SLEEP_{sleep_hours}"
