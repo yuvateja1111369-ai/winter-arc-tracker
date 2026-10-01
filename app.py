@@ -33,7 +33,7 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- STUNNING SLIDESHOW & THEME CSS ---
+# --- TRUE SCROLLING SLIDESHOW & MOBILE-FRIENDLY CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
@@ -52,25 +52,17 @@ st.markdown("""
         100% { background-image: linear-gradient(rgba(5, 5, 10, 0.3), rgba(5, 5, 10, 0.4)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
     }
 
-    /* Full-screen background container that stays locked behind your content while allowing natural scrolling */
-    .stApp {
-        background: transparent !important;
-    }
-    
-    /* Background layer injection */
-    .stApp::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-size: cover;
-        background-position: center center;
-        background-repeat: no-repeat;
+    /* Force Streamlit's main content wrapper to handle natural scrolling with the background */
+    [data-testid="stMain"] {
+        background-size: cover !important;
+        background-position: center top !important;
+        background-repeat: repeat-y !important;
+        background-attachment: scroll !important;
         animation: slideShow 900s infinite;
-        z-index: -999;
-        pointer-events: none;
+    }
+
+    .stApp {
+        background-color: #05050a !important;
     }
 
     h1 {
