@@ -33,7 +33,7 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- 5-IMAGE ROTATING BACKGROUND SLIDESHOW CSS ---
+# --- BRIGHT, CENTERED, 15-MINUTE ROTATING SLIDESHOW CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
@@ -44,21 +44,22 @@ st.markdown("""
     }
 
     @keyframes slideShow {
-        0% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
-        20% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg2.jpg.jpg'); }
-        40% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg3.jpg.jpg'); }
-        60% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg4.jpg.jpg'); }
-        80% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg5.jpg.jpg'); }
-        100% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
+        0% { background-image: linear-gradient(rgba(5, 5, 10, 0.35), rgba(5, 5, 10, 0.45)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
+        20% { background-image: linear-gradient(rgba(5, 5, 10, 0.35), rgba(5, 5, 10, 0.45)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg2.jpg.jpg'); }
+        40% { background-image: linear-gradient(rgba(5, 5, 10, 0.35), rgba(5, 5, 10, 0.45)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg3.jpg.jpg'); }
+        60% { background-image: linear-gradient(rgba(5, 5, 10, 0.35), rgba(5, 5, 10, 0.45)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg4.jpg.jpg'); }
+        80% { background-image: linear-gradient(rgba(5, 5, 10, 0.35), rgba(5, 5, 10, 0.45)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg5.jpg.jpg'); }
+        100% { background-image: linear-gradient(rgba(5, 5, 10, 0.35), rgba(5, 5, 10, 0.45)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
     }
 
-    /* Full-screen animated background slideshow */
+    /* Fixed full-screen layout that centers and fits images without weird zooming */
     .stApp {
         background-size: cover;
-        background-position: center;
+        background-position: center center;
         background-repeat: no-repeat;
         background-attachment: fixed;
-        animation: slideShow 25s infinite;
+        /* 15 minutes total duration (900 seconds), meaning each image stays visible for 3 minutes */
+        animation: slideShow 900s infinite;
     }
 
     h1 {
