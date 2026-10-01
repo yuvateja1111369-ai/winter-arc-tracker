@@ -33,12 +33,11 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- FIXED 4K FULL-SCREEN SLIDESHOW (NO SCROLLING) CSS ---
+# --- FULLY RESPONSIVE DEVICE-ADAPTIVE CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
 
-    /* Lock body and HTML viewports to prevent any page scrolling */
     html, body {
         height: 100vh;
         overflow: hidden !important;
@@ -48,14 +47,13 @@ st.markdown("""
 
     @keyframes slideShow {
         0% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
-        20% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg2.jpg.jpg'); }
-        40% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg3.jpg.jpg'); }
-        60% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg4.jpg.jpg'); }
-        80% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg5.jpg.jpg'); }
+        25% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg3.jpg.jpg'); }
+        50% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg4.jpg.jpg'); }
+        75% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg5.jpg.jpg'); }
         100% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
     }
 
-    /* Fixed full-screen viewport container with crisp 4K cover sizing */
+    /* Base responsive background styling for Laptops & Desktops */
     .stApp {
         background-size: cover !important;
         background-position: center center !important;
@@ -63,7 +61,25 @@ st.markdown("""
         background-attachment: fixed !important;
         animation: slideShow 900s infinite;
         height: 100vh !important;
-        overflow-y: auto !important; /* Internal sleek container scroll if needed, but background stays locked */
+        overflow-y: auto !important;
+    }
+
+    /* Tablet adjustment */
+    @media (max-width: 1024px) {
+        .stApp {
+            background-size: cover !important;
+        }
+    }
+
+    /* Mobile adjustment: ensures the image fits portrait/landscape screens cleanly */
+    @media (max-width: 768px) {
+        .stApp {
+            background-size: 100% 100% !important;
+        }
+        .block-container {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
     }
 
     h1 {
@@ -103,13 +119,6 @@ st.markdown("""
         background-color: #00e5ff !important;
         color: #000000 !important;
         box-shadow: 0 0 15px #00e5ff;
-    }
-    
-    @media (max-width: 768px) {
-        .block-container {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
-        }
     }
 </style>
 """, unsafe_allow_html=True)
