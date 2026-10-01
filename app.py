@@ -18,18 +18,46 @@ def init_supabase():
 
 supabase: Client = init_supabase()
 
-@st.cache_resource
-def authenticate_user():
-    try:
-        res = supabase.auth.sign_in_with_password({
-            "email": "yuvateja1111369@gmail.com",
-            "password": "YUVATEJA"
-        })
-        return res.user.id
-    except Exception as e:
-        return None
+# --- AUTHENTICATION STATE & SIDEBAR LOGIN ---
+if "user_id" not in st.session_state:
+    st.session_state.user_id = None
+    st.session_state.user_email = ""
 
-user_id = authenticate_user()
+st.sidebar.title("🛡️ SYSTEM ACCESS")
+
+if not st.session_state.user_id:
+    auth_mode = st.sidebar.radio("Authentication", ["Sign In", "Register New Hunter"])
+    input_email = st.sidebar.text_input("Hunter Email")
+    input_password = st.sidebar.text_input("Password", type="password")
+    
+    if st.sidebar.button("AUTHENTICATE", use_container_width=True):
+        try:
+            if auth_mode == "Sign In":
+                res = supabase.auth.sign_in_with_password({"email": input_email, "password": input_password})
+            else:
+                res = supabase.auth.sign_up({"email": input_email, "password": input_password})
+            
+            if res.user:
+                st.session_state.user_id = res.user.id
+                st.session_state.user_email = input_email
+                st.success("Access Granted!")
+                st.rerun()
+        except Exception as e:
+            st.sidebar.error(f"Access Denied: {e}")
+            
+    st.info("Please sign in or register to access your personal system records.")
+    st.stop() # Halts app rendering until authenticated
+else:
+    user_id = st.session_state.user_id
+    st.sidebar.success(f"Logged in as:\n{st.session_state.user_email}")
+    if st.sidebar.button("LOG OUT", use_container_width=True):
+        st.session_state.user_id = None
+        st.session_state.user_email = ""
+        try:
+            supabase.auth.sign_out()
+        except:
+            pass
+        st.rerun()
 
 # --- THEME & BACKGROUND SLIDESHOW CSS ---
 st.markdown("""
@@ -118,7 +146,7 @@ LOCKED_RULES = [
 date_range = pd.date_range(start="2026-10-01", end="2026-12-31")
 days = [d.strftime("%b %d") for d in date_range]
 
-# --- LOAD HABITS & PROGRESS FROM SUPABASE (ISOLATED BY user_id) ---
+# --- LOAD HABITS & PROGRESS FOR THE LOGGED-IN USER ONLY ---
 if "tracker_df" not in st.session_state:
     initial_habits = [
         "WORK OUT 5-6 TIMES A WEEK", "DRINK 1 GALLON OF WATER DAILY", 
@@ -133,18 +161,10 @@ if "tracker_df" not in st.session_state:
     progress_map = {}
     if user_id:
         try:
-            # STRICT FILTER: Only pull rows matching the logged-in user_id
             res = supabase.table("habits").select("name, progress_json").eq("user_id", user_id).execute()
             if res.data:
                 for row in res.data:
                     h_name = row["name"]
-                    if h_name == "NOTHING BUT 90 DAYS OF PURE DISCIPLINE":
-                        try:
-                            supabase.table("habits").delete().eq("user_id", user_id).eq("name", h_name).execute()
-                        except Exception:
-                            pass
-                        continue
-                        
                     if not h_name.startswith("SLEEP_"):
                         loaded_habits.append(h_name)
                         if row.get("progress_json"):
@@ -165,13 +185,12 @@ if "tracker_df" not in st.session_state:
     df.insert(0, "Habit Name", habits_list)
     st.session_state.tracker_df = df
 
-# --- LOAD SLEEP RECORDS FROM SUPABASE (ISOLATED BY user_id) ---
+# --- LOAD SLEEP RECORDS FOR THE LOGGED-IN USER ONLY ---
 if "sleep_df" not in st.session_state:
     sleep_rows = ["10 hrs", "8 hrs", "6 hrs", "4 hrs", "2 hrs"]
     loaded_sleep = {}
     if user_id:
         try:
-            # STRICT FILTER: Only pull sleep rows matching the logged-in user_id
             res = supabase.table("habits").select("name, progress_json").eq("user_id", user_id).execute()
             if res.data:
                 for row in res.data:
@@ -217,7 +236,6 @@ with col1:
                 
                 if user_id:
                     try:
-                        # Insert with user_id binding
                         supabase.table("habits").insert({"user_id": user_id, "name": new_habit, "progress_json": "{}"}).execute()
                     except Exception as err:
                         st.error(f"Cloud sync error: {err}")
@@ -234,7 +252,6 @@ with col2:
             st.session_state.tracker_df = st.session_state.tracker_df[st.session_state.tracker_df["Habit Name"] != habit_to_remove]
             if user_id:
                 try:
-                    # Delete restricted strictly to user_id and habit name
                     supabase.table("habits").delete().eq("user_id", user_id).eq("name", habit_to_remove).execute()
                 except Exception:
                     pass
@@ -272,10 +289,10 @@ edited_sleep_df = st.data_editor(
 )
 st.session_state.sleep_df = edited_sleep_df
 
-# --- HANDLE MANUAL SAVE BUTTON CLICK (STRICTLY ISOLATED BY user_id) ---
+# --- HANDLE MANUAL SAVE BUTTON CLICK ---
 if save_clicked and user_id:
     try:
-        # Save Habits with strict user_id scoping
+        # Save Habits strictly for this user
         for _, row in st.session_state.tracker_df.iterrows():
             habit_name = row["Habit Name"]
             day_dict = {day: bool(row[day]) for day in days}
@@ -286,7 +303,7 @@ if save_clicked and user_id:
             else:
                 supabase.table("habits").insert({"user_id": user_id, "name": habit_name, "progress_json": json.dumps(day_dict)}).execute()
             
-        # Save Sleep Records with strict user_id scoping
+        # Save Sleep Records strictly for this user
         for _, row in st.session_state.sleep_df.iterrows():
             sleep_hours = row["Sleep Hours"]
             db_name = f"SLEEP_{sleep_hours}"
