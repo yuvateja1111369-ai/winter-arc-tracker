@@ -114,7 +114,6 @@ if "tracker_df" not in st.session_state:
             if res.data:
                 for row in res.data:
                     h_name = row["name"]
-                    # Exclude sleep prefix from main habit list
                     if not h_name.startswith("SLEEP_"):
                         loaded_habits.append(h_name)
                         if row.get("progress_json"):
@@ -239,29 +238,32 @@ edited_sleep_df = st.data_editor(
 )
 st.session_state.sleep_df = edited_sleep_df
 
-# --- HANDLE MANUAL SAVE BUTTON CLICK (SAVES BOTH HABITS & SLEEP TO HABITS TABLE) ---
+# --- HANDLE MANUAL SAVE BUTTON CLICK (SAFE INSERT/UPDATE) ---
 if save_clicked and user_id:
     try:
         # Save Habits
         for _, row in st.session_state.tracker_df.iterrows():
             habit_name = row["Habit Name"]
             day_dict = {day: bool(row[day]) for day in days}
-            supabase.table("habits").upsert({
-                "user_id": user_id,
-                "name": habit_name,
-                "progress_json": json.dumps(day_dict)
-            }, on_conflict="user_id,name").execute()
             
-        # Save Sleep Records (stored with SLEEP_ prefix in habits table)
+            # Check if row exists, then update or insert safely
+            existing = supabase.table("habits").select("name").eq("user_id", user_id).eq("name", habit_name).execute()
+            if existing.data:
+                supabase.table("habits").update({"progress_json": json.dumps(day_dict)}).eq("user_id", user_id).eq("name", habit_name).execute()
+            else:
+                supabase.table("habits").insert({"user_id": user_id, "name": habit_name, "progress_json": json.dumps(day_dict)}).execute()
+            
+        # Save Sleep Records
         for _, row in st.session_state.sleep_df.iterrows():
             sleep_hours = row["Sleep Hours"]
             db_name = f"SLEEP_{sleep_hours}"
             day_dict = {day: bool(row[day]) for day in days}
-            supabase.table("habits").upsert({
-                "user_id": user_id,
-                "name": db_name,
-                "progress_json": json.dumps(day_dict)
-            }, on_conflict="user_id,name").execute()
+            
+            existing = supabase.table("habits").select("name").eq("user_id", user_id).eq("name", db_name).execute()
+            if existing.data:
+                supabase.table("habits").update({"progress_json": json.dumps(day_dict)}).eq("user_id", user_id).eq("name", db_name).execute()
+            else:
+                supabase.table("habits").insert({"user_id": user_id, "name": db_name, "progress_json": json.dumps(day_dict)}).execute()
             
         st.success("⚡ ALL PROGRESS & FATIGUE RECOVERY LOCKED IN CLOUD!")
     except Exception as e:
