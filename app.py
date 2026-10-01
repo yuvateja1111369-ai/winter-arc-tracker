@@ -33,18 +33,10 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- TRUE SCROLLING, MOBILE-FRIENDLY & BRIGHT SLIDESHOW CSS ---
+# --- ROOT-LEVEL SCROLLING SLIDESHOW CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
-
-    html, body, [data-testid="stAppViewContainer"], .stApp {
-        font-family: 'Rajdhani', sans-serif !important;
-        color: #00e5ff !important;
-        height: auto !important;
-        min-height: 100vh !important;
-        overflow: visible !important;
-    }
 
     @keyframes slideShow {
         0% { background-image: linear-gradient(rgba(5, 5, 10, 0.35), rgba(5, 5, 10, 0.45)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
@@ -55,11 +47,22 @@ st.markdown("""
         100% { background-image: linear-gradient(rgba(5, 5, 10, 0.35), rgba(5, 5, 10, 0.45)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
     }
 
-    /* Unlocks background to scroll naturally with the full page content */
+    /* Apply background directly to the main HTML document body so it scrolls natively */
+    html, body, [data-testid="stAppViewContainer"] {
+        font-family: 'Rajdhani', sans-serif !important;
+        color: #00e5ff !important;
+        background-color: #05050a !important;
+    }
+
     .stApp {
+        background: transparent !important;
+    }
+
+    /* This targets the actual browser window canvas for true natural scrolling */
+    body {
         background-size: cover !important;
         background-position: center top !important;
-        background-repeat: no-repeat !important;
+        background-repeat: repeat-y !important;
         background-attachment: scroll !important;
         animation: slideShow 900s infinite;
     }
