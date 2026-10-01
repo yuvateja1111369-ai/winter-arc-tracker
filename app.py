@@ -38,11 +38,9 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
 
-    html, body {
+    html, body, [class*="css"] {
         font-family: 'Rajdhani', sans-serif !important;
         color: #00e5ff !important;
-        height: 100%;
-        overflow: auto;
     }
 
     @keyframes slideShow {
@@ -54,14 +52,13 @@ st.markdown("""
         100% { background-image: linear-gradient(rgba(5, 5, 10, 0.35), rgba(5, 5, 10, 0.45)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
     }
 
-    /* Enables full page scrolling with the background image moving naturally */
-    .stApp {
+    /* Targets Streamlit's main scrolling container so background moves naturally */
+    [data-testid="stAppViewContainer"] {
         background-size: cover;
         background-position: center top;
         background-repeat: no-repeat;
-        background-attachment: scroll !important;
+        background-attachment: scroll;
         animation: slideShow 900s infinite;
-        min-height: 100vh;
     }
 
     h1 {
