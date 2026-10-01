@@ -31,7 +31,7 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- 3D INTERACTIVE COMPANION & APP CSS ---
+# --- ROAMING 3D IGRIS COMPANION CSS & JS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
@@ -63,15 +63,40 @@ st.markdown("""
         background-color: #05050a !important;
     }
 
-    /* Transparent 3D Canvas Layer spanning the entire window */
-    #canvas3d-container {
+    /* --- ROAMING 3D IGRIS WIDGET --- */
+    #roaming-igris {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        pointer-events: none; /* Lets clicks pass through to app, but JS can track cursor */
-        z-index: 99999;
+        width: 100px;
+        height: 100px;
+        z-index: 999999;
+        pointer-events: none;
+        transition: transform 0.1s ease-out;
+        will-change: left, top, transform;
+    }
+
+    .igris-avatar {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #00e5ff;
+        box-shadow: 0 0 20px #00e5ff, inset 0 0 10px #8a2be2;
+        background-color: #000;
+    }
+
+    .igris-bubble {
+        position: absolute;
+        bottom: 95px;
+        left: -20px;
+        background: rgba(5, 5, 10, 0.9);
+        border: 1px solid #00e5ff;
+        color: #00e5ff;
+        padding: 4px 8px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+        white-space: nowrap;
     }
 
     h1 {
@@ -114,67 +139,74 @@ st.markdown("""
     }
 </style>
 
-<!-- Load Three.js library for 3D rendering in browser -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-<div id="canvas3d-container"></div>
+<!-- Roaming 3D Igris DOM Element -->
+<div id="roaming-igris">
+    <div class="igris-bubble" id="igris-text">"My Liege is watching..."</div>
+    <img src="https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/companion.png.jpeg" class="igris-avatar" alt="Igris">
+</div>
 
 <script>
-    // Initialize Three.js 3D Scene for the roaming companion
-    const container = document.getElementById('canvas3d-container');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    // JavaScript Roaming & 3D Tilt Engine for Igris
+    const igris = document.getElementById('roaming-igris');
+    const bubble = document.getElementById('igris-text');
+
+    let posX = window.innerWidth - 150;
+    let posY = window.innerHeight - 150;
+    let targetX = posX;
+    let targetY = posY;
     
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    container.appendChild(renderer.domElement);
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
 
-    // Add lighting for the 3D model
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
-    scene.add(ambientLight);
-    const pointLight = new THREE.PointLight(0x00e5ff, 2, 50);
-    pointLight.position.set(0, 5, 5);
-    scene.add(pointLight);
-
-    // Temporary placeholder 3D glowing character mesh (representing Igris until a custom 3D .glb file is linked)
-    const geometry = new THREE.BoxGeometry(1, 2, 0.5);
-    const material = new THREE.MeshStandardMaterial({ color: 0x002b55, emissive: 0x00e5ff, roughness: 0.3 });
-    const companion3D = new THREE.Mesh(geometry, material);
-    scene.add(companion3D);
-
-    camera.position.z = 5;
-
-    // Mouse tracking variables
-    let mouseX = 0, mouseY = 0;
-    let targetX = 0, targetY = 0;
-
-    window.addEventListener('mousemove', (event) => {
-        mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-        mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+    // Track mouse position smoothly
+    window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
     });
 
-    // Animation Loop: Makes the 3D model roam and follow mouse cursor fluidly
-    function animate() {
-        requestAnimationFrame(animate);
+    // Periodically pick a new random spot on screen for Igris to roam to
+    setInterval(() => {
+        targetX = Math.random() * (window.innerWidth - 150) + 50;
+        targetY = Math.random() * (window.innerHeight - 200) + 50;
+        
+        const quotes = [
+            "\"My Liege, fulfill your quests!\"",
+            "\"Penalty quest avoided? Good.\"",
+            "\"Shadow monarch's domain.\"",
+            "\"Discipline is absolute.\""
+        ];
+        bubble.innerText = quotes[Math.floor(Math.random() * quotes.length)];
+    }, 6000);
 
-        // Smoothly glide toward mouse coordinates
-        targetX = mouseX * 3;
-        targetY = mouseY * 2;
-        companion3D.position.x += (targetX - companion3D.position.x) * 0.05;
-        companion3D.position.y += (targetY - companion3D.position.y) * 0.05;
+    // Animation loop for smooth roaming and 3D tilting toward the mouse cursor
+    function roamLoop() {
+        // Smooth glide toward target destination
+        posX += (targetX - posX) * 0.03;
+        posY += (targetY - posY) * 0.03;
 
-        // Idle floating/rotating animation
-        companion3D.rotation.y += 0.01;
+        // Calculate 3D tilt based on mouse relative to Igris position
+        let dx = mouseX - posX;
+        let dy = mouseY - posY;
+        let tiltX = (dy / window.innerHeight) * 30;
+        let tiltY = (dx / window.innerWidth) * -30;
 
-        renderer.render(scene, camera);
+        igris.style.left = posX + 'px';
+        igris.style.top = posY + 'px';
+        igris.style.transform = `perspective(600px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.05)`;
+
+        requestAnimationFrame(roamLoop);
     }
-    animate();
+    roamLoop();
 
-    // Handle screen resizing
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+    // React when any button is clicked on screen
+    document.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+            bubble.innerText = "\"Quest action registered!\"";
+            igris.style.transform += " scale(1.2)";
+            setTimeout(() => {
+                igris.style.transform = "scale(1)";
+            }, 300);
+        }
     });
 </script>
 """, unsafe_allow_html=True)
