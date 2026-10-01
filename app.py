@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import json
 from supabase import create_client, Client
 
 # Configure the page
@@ -94,7 +95,7 @@ LOCKED_RULES = [
 
 days = [str(i) for i in range(1, 32)]
 
-# --- INITIALIZE STATE & AUTO-SEED 16 RULES TO SUPABASE IF EMPTY ---
+# --- LOAD DATA FROM SUPABASE ON STARTUP ---
 if "tracker_df" not in st.session_state:
     initial_habits = [
         "WORK OUT 5-6 TIMES A WEEK", "DRINK 1 GALLON OF WATER DAILY", 
@@ -105,26 +106,28 @@ if "tracker_df" not in st.session_state:
         "NO EXCUSES", "NOTHING BUT 90 DAYS OF PURE DISCIPLINE"
     ]
     
-    loaded_habits = []
+    loaded_df = None
     if user_id:
         try:
-            res = supabase.table("habits").select("name").eq("user_id", user_id).execute()
+            res = supabase.table("tracker_data").select("*").eq("user_id", user_id).execute()
             if res.data:
-                loaded_habits = [row["name"] for row in res.data]
-            
-            # If database has no habits yet, auto-insert all 16 official rules!
-            if not loaded_habits:
-                for habit in initial_habits:
-                    supabase.table("habits").insert({"user_id": user_id, "name": habit}).execute()
-                loaded_habits = initial_habits
+                rows = []
+                for item in res.data:
+                    row_data = {"Habit Name": item["habit_name"]}
+                    day_vals = json.loads(item["progress_json"])
+                    row_data.update(day_vals)
+                    rows.append(row_data)
+                loaded_df = pd.DataFrame(rows)
         except Exception:
             pass
             
-    habits_list = loaded_habits if loaded_habits else initial_habits
-    grid_data = {day: [False] * len(habits_list) for day in days}
-    df = pd.DataFrame(grid_data)
-    df.insert(0, "Habit Name", habits_list)
-    st.session_state.tracker_df = df
+    if loaded_df is not None and not loaded_df.empty:
+        st.session_state.tracker_df = loaded_df
+    else:
+        grid_data = {day: [False] * len(initial_habits) for day in days}
+        df = pd.DataFrame(grid_data)
+        df.insert(0, "Habit Name", initial_habits)
+        st.session_state.tracker_df = df
 
 if "sleep_df" not in st.session_state:
     sleep_rows = ["10 hrs", "8 hrs", "6 hrs", "4 hrs", "2 hrs"]
@@ -132,6 +135,11 @@ if "sleep_df" not in st.session_state:
     sleep_df = pd.DataFrame(sleep_data)
     sleep_df.insert(0, "Sleep Hours", sleep_rows)
     st.session_state.sleep_df = sleep_df
+
+# --- SAVE BUTTON & CONTROLS HEADER ---
+save_col1, save_col2 = st.columns([3, 1])
+with save_col2:
+    save_clicked = st.button("💾 SAVE PROGRESS", use_container_width=True)
 
 # --- HABITS SECTION ---
 st.subheader("STATUS: PENALTY QUEST EVASION")
@@ -148,13 +156,7 @@ with col1:
                     new_row[str(i)] = False
                 new_df = pd.DataFrame([new_row])
                 st.session_state.tracker_df = pd.concat([st.session_state.tracker_df, new_df], ignore_index=True)
-                
-                # Sync new habit to Supabase
-                if user_id:
-                    try:
-                        supabase.table("habits").insert({"user_id": user_id, "name": new_habit}).execute()
-                    except Exception as err:
-                        st.error(f"Cloud sync error: {err}")
+                st.success(f"Added: {new_habit}. Click SAVE PROGRESS to lock it in!")
                 st.rerun()
 
 with col2:
@@ -167,7 +169,7 @@ with col2:
             st.session_state.tracker_df = st.session_state.tracker_df[st.session_state.tracker_df["Habit Name"] != habit_to_remove]
             if user_id:
                 try:
-                    supabase.table("habits").delete().eq("user_id", user_id).eq("name", habit_to_remove).execute()
+                    supabase.table("tracker_data").delete().eq("user_id", user_id).eq("habit_name", habit_to_remove).execute()
                 except Exception:
                     pass
             st.rerun()
@@ -193,6 +195,24 @@ edited_df = st.data_editor(
 )
 
 st.session_state.tracker_df = edited_df
+
+# --- HANDLE MANUAL SAVE BUTTON CLICK ---
+if save_clicked and user_id:
+    try:
+        for _, row in st.session_state.tracker_df.iterrows():
+            habit_name = row["Habit Name"]
+            day_dict = {day: bool(row[day]) for day in days}
+            
+            payload = {
+                "user_id": user_id,
+                "habit_name": habit_name,
+                "progress_json": json.dumps(day_dict)
+            }
+            supabase.table("tracker_data").upsert(payload, on_conflict="user_id,habit_name").execute()
+            
+        st.success("⚡ PROGRESS SYNCED & LOCKED IN CLOUD DATABASE!")
+    except Exception as e:
+        st.error(f"Save failed: {e}")
 
 # --- INTERACTIVE LIVE CHART ---
 st.subheader("📈 PLAYER MOMENTUM")
