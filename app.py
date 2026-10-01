@@ -33,38 +33,32 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- SOLO LEVELING THEME & WATERMARK CSS ---
+# --- 5-IMAGE ROTATING BACKGROUND SLIDESHOW CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Rajdhani', sans-serif !important;
-        background-color: #05050a !important;
         color: #00e5ff !important;
     }
 
-    /* Solo Leveling Watermark Background Overlay */
-    .stApp::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image: linear-gradient(rgba(5, 5, 10, 0.85), rgba(5, 5, 10, 0.92)), 
-                          url('https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1920&auto=format&fit=crop');
+    @keyframes slideShow {
+        0% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('bg1.jpg.jpg'); }
+        20% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('bg2.jpg.jpg'); }
+        40% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('bg3.jpg.jpg'); }
+        60% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('bg4.jpg.jpg'); }
+        80% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('bg5.jpg.jpg'); }
+        100% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('bg1.jpg.jpg'); }
+    }
+
+    /* Full-screen animated background slideshow */
+    .stApp {
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
-        pointer-events: none;
-        z-index: 0;
-        opacity: 0.25;
-    }
-
-    .main .block-container {
-        position: relative;
-        z-index: 1;
+        background-attachment: fixed;
+        animation: slideShow 25s infinite;
     }
 
     h1 {
@@ -89,7 +83,7 @@ st.markdown("""
     }
 
     .stButton>button {
-        background-color: transparent !important;
+        background-color: rgba(0, 0, 0, 0.6) !important;
         color: #00e5ff !important;
         border: 1px solid #00e5ff !important;
         border-radius: 0px !important;
@@ -108,14 +102,6 @@ st.markdown("""
 
 st.title("🗡 SYSTEM: PLAYER AWAKENING")
 st.markdown("<p style='text-align: center; font-size: 20px; color: #a200ff;'>[ SYSTEM ACTIVE: OCT 1, 2026 – DEC 31, 2026 ]</p>", unsafe_allow_html=True)
-
-# --- STABLE ANIME BANNER ---
-st.markdown("""
-<div style="display: flex; justify-content: center; margin-bottom: 20px;">
-    <img src="https://media.giphy.com/media/1va11UvJ1Z3K8/giphy.gif" style="max-width: 100%; height: 260px; border-radius: 4px; border: 1px solid #00e5ff; box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);">
-</div>
-""", unsafe_allow_html=True)
-
 st.divider()
 
 LOCKED_RULES = [
