@@ -33,15 +33,39 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- SOLO LEVELING CSS THEME ---
+# --- SOLO LEVELING 4K / 3D THEME & WATERMARK CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Rajdhani', sans-serif !important;
-        background-color: #0a0a0f !important;
+        background-color: #05050a !important;
         color: #00e5ff !important;
+    }
+
+    /* Solo Leveling Watermark Background Overlay */
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: linear-gradient(rgba(5, 5, 10, 0.85), rgba(5, 5, 10, 0.92)), 
+                          url('https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1920&auto=format&fit=crop');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.25;
+    }
+
+    /* Ensure app elements float above watermark */
+    .main .block-container {
+        position: relative;
+        z-index: 1;
     }
 
     h1 {
@@ -84,7 +108,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🗡 SYSTEM: PLAYER AWAKENING")
-st.markdown("<p style='text-align: center; font-size: 20px; color: #a200ff;'>[ LIVE CALENDAR: OCT 1, 2026 – DEC 31, 2026 ]</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 20px; color: #a200ff;'>[ SYSTEM ACTIVE: OCT 1, 2026 – DEC 31, 2026 ]</p>", unsafe_allow_html=True)
+
+# --- 4K / 3D ANIMATED BANNER (SOLO LEVELING AURA) ---
+st.markdown("""
+<div style="display: flex; justify-content: center; margin-bottom: 20px;">
+    <iframe src="https://giphy.com/embed/1JVkWyO7JgZlX5oH55" width="100%" height="280" style="max-width: 750px; border-radius: 4px; border: 1px solid #00e5ff; box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
+</div>
+""", unsafe_allow_html=True)
+
 st.divider()
 
 LOCKED_RULES = [
@@ -94,7 +126,6 @@ LOCKED_RULES = [
     "WAKE UP BY 5 AM", "NO EXCUSES", "NOTHING BUT 90 DAYS OF PURE DISCIPLINE"
 ]
 
-# Generate exact calendar date strings from Oct 1, 2026 to Dec 31, 2026
 date_range = pd.date_range(start="2026-10-01", end="2026-12-31")
 days = [d.strftime("%b %d") for d in date_range]
 
