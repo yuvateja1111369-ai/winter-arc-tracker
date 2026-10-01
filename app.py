@@ -1,375 +1,43 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-import json
-from datetime import datetime
 from supabase import create_client, Client
 
-# Configure the page
-st.set_page_config(page_title="System: Winter Arc", page_icon="🗡️", layout="wide")
+# Initialize Supabase client using Streamlit secrets
+url = st.secrets["supabase"]["url"]
+key = st.secrets["supabase"]["key"]
+supabase: Client = create_client(url, key)
 
-# --- SUPABASE CONNECTION SETUP ---
-SUPABASE_URL = "https://hhutdleywbpcwexgqupw.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhodXRkbGV5d2JwY3dleGdxdXB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzE2MDEsImV4cCI6MjEwNjM0NzYwMX0.Vb6HEGAmSMfry9tTcHyiNDgMy5HKBmvttn_IYBv2BfY"
+st.title("WINTER ARC TRACKER")
 
-@st.cache_resource
-def init_supabase():
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+# Check if user is already logged in
+if "user" not in st.session_state:
+    st.session_state.user = None
 
-supabase: Client = init_supabase()
-
-# --- AUTHENTICATION STATE & GOOGLE OAUTH SIDEBAR ---
-if "user_id" not in st.session_state:
-    st.session_state.user_id = None
-    st.session_state.user_email = ""
-
-# Check if Supabase redirected back with access tokens in query parameters/hash
-query_params = st.query_params
-if "access_token" in query_params and not st.session_state.user_id:
-    # If tokens are passed back via query params, we can capture the user session
-    try:
-        access_token = query_params["access_token"]
-        refresh_token = query_params.get("refresh_token", "")
-        session_res = supabase.auth.set_session(access_token, refresh_token)
-        if session_res.user:
-            st.session_state.user_id = session_res.user.id
-            st.session_state.user_email = session_res.user.email
-            st.rerun()
-    except Exception as e:
-        pass
-
-st.sidebar.title("🛡️ SYSTEM ACCESS")
-
-if not st.session_state.user_id:
-    st.sidebar.markdown("### Authentication Required")
-    st.sidebar.markdown("Link your Google account to initialize your personal System instance.")
+if st.session_state.user is None:
+    st.subheader("Sign In or Create Account")
     
-    # Generate Google OAuth login URL from Supabase
-    try:
-        # Note: Replace with your actual deployed Streamlit URL or localhost for testing
-        redirect_url = "https://winter-arc-tracker-v6h3ewjofgpu3opszhoj.streamlit.app"
-        
-        oauth_res = supabase.auth.sign_in_with_oauth({
-            "provider": "google",
-            "options": {
-                "redirect_to": redirect_url
-            }
-        })
-        google_login_url = oauth_res.url
-        
-        # Render a sleek button linking to Google Auth
-        st.sidebar.markdown(
-            f"""
-            <a href="{google_login_url}" target="_self" style="text-decoration: none;">
-                <div style="background-color: #ffffff; color: #000000; padding: 10px; text-align: center; font-weight: bold; border-radius: 4px; border: 1px solid #00e5ff; box-shadow: 0 0 10px rgba(0,229,255,0.3);">
-                    🌐 SIGN IN WITH GOOGLE
-                </div>
-            </a>
-            """,
-            unsafe_allow_html=True
-        )
-    except Exception as e:
-        st.sidebar.error(f"OAuth initialization error: {e}")
-            
-    st.info("Please authenticate with Google to access your isolated system records.")
-    st.stop() # Halts app rendering until authenticated
-else:
-    user_id = st.session_state.user_id
-    st.sidebar.success(f"Hunter Connected:\n{st.session_state.user_email}")
-    if st.sidebar.button("LOG OUT", use_container_width=True):
-        st.session_state.user_id = None
-        st.session_state.user_email = ""
-        st.query_params.clear()
+    auth_mode = st.radio("Choose action", ["Log In", "Sign Up"])
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    
+    if st.button("Submit"):
         try:
-            supabase.auth.sign_out()
-        except:
-            pass
-        st.rerun()
-
-# --- THEME & BACKGROUND SLIDESHOW CSS ---
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
-
-    html, body {
-        height: 100vh;
-        overflow: hidden !important;
-        font-family: 'Rajdhani', sans-serif !important;
-        color: #00e5ff !important;
-        background-color: #05050a !important;
-    }
-
-    @keyframes slideShow {
-        0% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
-        25% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg3.jpg.jpg'); }
-        50% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg4.jpg.jpg'); }
-        75% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg5.jpg.jpg'); }
-        100% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
-    }
-
-    .stApp {
-        background-size: contain !important;
-        background-position: center center !important;
-        background-repeat: no-repeat !important;
-        background-attachment: fixed !important;
-        animation: slideShow 900s infinite;
-        height: 100vh !important;
-        overflow-y: auto !important;
-        background-color: #05050a !important;
-    }
-
-    h1 {
-        text-align: center;
-        text-transform: uppercase;
-        color: #ffffff !important;
-        text-shadow: 0 0 10px #00e5ff, 0 0 20px #00e5ff, 0 0 40px #8a2be2;
-        animation: glow 2s infinite alternate;
-        font-size: calc(1.5rem + 1vw);
-    }
-
-    @keyframes glow {
-        from { text-shadow: 0 0 10px #00e5ff, 0 0 20px #00e5ff, 0 0 30px #8a2be2; }
-        to { text-shadow: 0 0 20px #00e5ff, 0 0 30px #00e5ff, 0 0 50px #8a2be2; }
-    }
-
-    h2, h3 {
-        color: #a200ff !important;
-        border-bottom: 1px solid #00e5ff;
-        padding-bottom: 5px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-    }
-
-    .stButton>button {
-        background-color: rgba(0, 0, 0, 0.6) !important;
-        color: #00e5ff !important;
-        border: 1px solid #00e5ff !important;
-        border-radius: 0px !important;
-        transition: 0.3s;
-        text-transform: uppercase;
-        font-weight: bold;
-        width: 100%;
-    }
-    
-    .stButton>button:hover {
-        background-color: #00e5ff !important;
-        color: #000000 !important;
-        box-shadow: 0 0 15px #00e5ff;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-st.title("🗡 SYSTEM: PLAYER AWAKENING")
-st.markdown("<p style='text-align: center; font-size: 18px; color: #a200ff;'>[ SYSTEM ACTIVE: OCT 1, 2026 – DEC 31, 2026 ]</p>", unsafe_allow_html=True)
-st.divider()
-
-LOCKED_RULES = [
-    "WORK OUT 5-6 TIMES A WEEK", "DRINK 1 GALLON OF WATER DAILY", 
-    "GET 8 HOURS OF SLEEP DAILY", "MAX OUT YOUR PROTEIN DAILY", 
-    "READ 10 PAGES DAILY", "COLD SHOWERS DAILY", "10K STEPS DAILY", 
-    "WAKE UP BY 5 AM", "NO EXCUSES"
-]
-
-date_range = pd.date_range(start="2026-10-01", end="2026-12-31")
-days = [d.strftime("%b %d") for d in date_range]
-
-# --- LOAD HABITS & PROGRESS FOR THE LOGGED-IN USER ONLY ---
-if "tracker_df" not in st.session_state:
-    initial_habits = [
-        "WORK OUT 5-6 TIMES A WEEK", "DRINK 1 GALLON OF WATER DAILY", 
-        "GET 8 HOURS OF SLEEP DAILY", "MAX OUT YOUR PROTEIN DAILY", 
-        "READ 10 PAGES DAILY", "COLD SHOWERS DAILY", "10K STEPS DAILY", 
-        "NO FAST FOOD", "NO SUGAR", "NO ALCOHOL", "NO DISTRACTIONS", 
-        "WAKE UP BY 5 AM", "GO TO SLEEP BY 8 PM", "FOCUS ON YOURSELF", 
-        "NO EXCUSES"
-    ]
-    
-    loaded_habits = []
-    progress_map = {}
-    if user_id:
-        try:
-            res = supabase.table("habits").select("name, progress_json").eq("user_id", user_id).execute()
-            if res.data:
-                for row in res.data:
-                    h_name = row["name"]
-                    if not h_name.startswith("SLEEP_"):
-                        loaded_habits.append(h_name)
-                        if row.get("progress_json"):
-                            progress_map[h_name] = json.loads(row["progress_json"])
-        except Exception:
-            pass
-            
-    habits_list = loaded_habits if loaded_habits else initial_habits
-    
-    grid_data = {}
-    for day in days:
-        day_vals = []
-        for h in habits_list:
-            day_vals.append(progress_map.get(h, {}).get(day, False))
-        grid_data[day] = day_vals
-        
-    df = pd.DataFrame(grid_data)
-    df.insert(0, "Habit Name", habits_list)
-    st.session_state.tracker_df = df
-
-# --- LOAD SLEEP RECORDS FOR THE LOGGED-IN USER ONLY ---
-if "sleep_df" not in st.session_state:
-    sleep_rows = ["10 hrs", "8 hrs", "6 hrs", "4 hrs", "2 hrs"]
-    loaded_sleep = {}
-    if user_id:
-        try:
-            res = supabase.table("habits").select("name, progress_json").eq("user_id", user_id).execute()
-            if res.data:
-                for row in res.data:
-                    h_name = row["name"]
-                    if h_name.startswith("SLEEP_"):
-                        s_hours = h_name.replace("SLEEP_", "")
-                        if row.get("progress_json"):
-                            loaded_sleep[s_hours] = json.loads(row["progress_json"])
-        except Exception:
-            pass
-            
-    sleep_data = {}
-    for day in days:
-        day_vals = []
-        for row_name in sleep_rows:
-            day_vals.append(loaded_sleep.get(row_name, {}).get(day, False))
-        sleep_data[day] = day_vals
-        
-    sleep_df = pd.DataFrame(sleep_data)
-    sleep_df.insert(0, "Sleep Hours", sleep_rows)
-    st.session_state.sleep_df = sleep_df
-
-# --- SAVE BUTTON & CONTROLS HEADER ---
-save_col1, save_col2 = st.columns([3, 1])
-with save_col2:
-    save_clicked = st.button("💾 SAVE PROGRESS", use_container_width=True)
-
-# --- HABITS SECTION ---
-st.subheader("STATUS: PENALTY QUEST EVASION")
-
-col1, col2 = st.columns(2)
-with col1:
-    with st.form("add_habit_form", clear_on_submit=True):
-        new_habit = st.text_input("➕ ADD NEW PARAMETER:")
-        add_submitted = st.form_submit_button("ACCEPT QUEST")
-        if add_submitted and new_habit:
-            if new_habit not in st.session_state.tracker_df["Habit Name"].values:
-                new_row = {"Habit Name": new_habit}
-                for day in days:
-                    new_row[day] = False
-                new_df = pd.DataFrame([new_row])
-                st.session_state.tracker_df = pd.concat([st.session_state.tracker_df, new_df], ignore_index=True)
-                
-                if user_id:
-                    try:
-                        supabase.table("habits").insert({"user_id": user_id, "name": new_habit, "progress_json": "{}"}).execute()
-                    except Exception as err:
-                        st.error(f"Cloud sync error: {err}")
-                st.success(f"Added: {new_habit}!")
+            if auth_mode == "Sign Up":
+                response = supabase.auth.sign_up({"email": email, "password": password})
+                st.success("Account created successfully! You can now log in.")
+            else:
+                response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                st.session_state.user = response.user
+                st.success("Logged in successfully!")
                 st.rerun()
-
-with col2:
-    with st.form("remove_habit_form"):
-        current_habits = st.session_state.tracker_df["Habit Name"].tolist()
-        removable_habits = [h for h in current_habits if h not in LOCKED_RULES]
-        habit_to_remove = st.selectbox("🗑 ABANDON QUEST:", options=[""] + removable_habits)
-        remove_submitted = st.form_submit_button("DELETE")
-        if remove_submitted and habit_to_remove:
-            st.session_state.tracker_df = st.session_state.tracker_df[st.session_state.tracker_df["Habit Name"] != habit_to_remove]
-            if user_id:
-                try:
-                    supabase.table("habits").delete().eq("user_id", user_id).eq("name", habit_to_remove).execute()
-                except Exception:
-                    pass
-            st.rerun()
-
-st.session_state.tracker_df["Completion Rate"] = (st.session_state.tracker_df[days].sum(axis=1) / len(days)) * 100
-cols = ["Habit Name", "Completion Rate"] + days
-st.session_state.tracker_df = st.session_state.tracker_df[cols]
-
-edited_df = st.data_editor(
-    st.session_state.tracker_df,
-    hide_index=True,
-    use_container_width=True,
-    column_config={
-        "Habit Name": st.column_config.Column(disabled=True),
-        "Completion Rate": st.column_config.ProgressColumn(
-            "COMPLETION %",
-            help="Current Level",
-            format="%d%%",
-            min_value=0,
-            max_value=100,
-        )
-    }
-)
-
-st.session_state.tracker_df = edited_df
-
-# --- SLEEP SECTION ---
-st.subheader("🌙 FATIGUE RECOVERY")
-edited_sleep_df = st.data_editor(
-    st.session_state.sleep_df,
-    hide_index=True,
-    use_container_width=True,
-    column_config={"Sleep Hours": st.column_config.Column(disabled=True)}
-)
-st.session_state.sleep_df = edited_sleep_df
-
-# --- HANDLE MANUAL SAVE BUTTON CLICK ---
-if save_clicked and user_id:
-    try:
-        # Save Habits strictly for this user
-        for _, row in st.session_state.tracker_df.iterrows():
-            habit_name = row["Habit Name"]
-            day_dict = {day: bool(row[day]) for day in days}
-            
-            existing = supabase.table("habits").select("name").eq("user_id", user_id).eq("name", habit_name).execute()
-            if existing.data:
-                supabase.table("habits").update({"progress_json": json.dumps(day_dict)}).eq("user_id", user_id).eq("name", habit_name).execute()
-            else:
-                supabase.table("habits").insert({"user_id": user_id, "name": habit_name, "progress_json": json.dumps(day_dict)}).execute()
-            
-        # Save Sleep Records strictly for this user
-        for _, row in st.session_state.sleep_df.iterrows():
-            sleep_hours = row["Sleep Hours"]
-            db_name = f"SLEEP_{sleep_hours}"
-            day_dict = {day: bool(row[day]) for day in days}
-            
-            existing = supabase.table("habits").select("name").eq("user_id", user_id).eq("name", db_name).execute()
-            if existing.data:
-                supabase.table("habits").update({"progress_json": json.dumps(day_dict)}).eq("user_id", user_id).eq("name", db_name).execute()
-            else:
-                supabase.table("habits").insert({"user_id": user_id, "name": db_name, "progress_json": json.dumps(day_dict)}).execute()
-            
-        st.success("⚡ ALL PROGRESS & FATIGUE RECOVERY LOCKED IN CLOUD!")
-    except Exception as e:
-        st.error(f"Save failed: {e}")
-
-# --- INTERACTIVE LIVE CHART ---
-st.subheader("📈 PLAYER MOMENTUM")
-daily_totals = st.session_state.tracker_df[days].sum()
-
-fig = px.line(
-    x=daily_totals.index, 
-    y=daily_totals.values, 
-    markers=True,
-    labels={"x": "DATE", "y": "QUESTS COMPLETED"}
-)
-
-fig.update_layout(
-    plot_bgcolor="rgba(0,0,0,0)",
-    paper_bgcolor="rgba(0,0,0,0)",
-    font_color="#00e5ff",
-    hovermode="x unified",
-    xaxis=dict(showgrid=False, title_font=dict(size=14, family="Rajdhani"), tickfont=dict(family="Rajdhani")),
-    yaxis=dict(showgrid=True, gridcolor="#1a1a2e", title_font=dict(size=14, family="Rajdhani"), tickfont=dict(family="Rajdhani"))
-)
-
-fig.update_traces(
-    line=dict(color="#00e5ff", width=3), 
-    marker=dict(size=10, color="#a200ff", line=dict(width=2, color="#00e5ff")),
-    hovertemplate="%{x}<br>Completed: %{y}<extra></extra>"
-)
-
-st.plotly_chart(fig, use_container_width=True)
+        except Exception as e:
+            st.error(f"Authentication failed: {e}")
+else:
+    st.write(f"Welcome back, {st.session_state.user.email}!")
+    
+    if st.button("Log Out"):
+        supabase.auth.sign_out()
+        st.session_state.user = None
+        st.rerun()
+        
+    # --- PUT YOUR WINTER ARC TRACKER APP CODE HERE ---
+    st.info("You are logged in and ready to track your progress!")
