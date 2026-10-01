@@ -44,12 +44,12 @@ st.markdown("""
     }
 
     @keyframes slideShow {
-        0% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('bg1.jpg.jpg'); }
-        20% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('bg2.jpg.jpg'); }
-        40% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('bg3.jpg.jpg'); }
-        60% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('bg4.jpg.jpg'); }
-        80% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('bg5.jpg.jpg'); }
-        100% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('bg1.jpg.jpg'); }
+        0% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
+        20% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg2.jpg.jpg'); }
+        40% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg3.jpg.jpg'); }
+        60% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg4.jpg.jpg'); }
+        80% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg5.jpg.jpg'); }
+        100% { background-image: linear-gradient(rgba(5, 5, 10, 0.82), rgba(5, 5, 10, 0.90)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
     }
 
     /* Full-screen animated background slideshow */
