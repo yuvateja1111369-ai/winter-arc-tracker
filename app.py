@@ -33,7 +33,7 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- DESKTOP 'FIT' (CONTAIN) & RESPONSIVE SLIDESHOW CSS ---
+# --- FLOATING SHADOW KNIGHT & THEME CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
@@ -54,7 +54,6 @@ st.markdown("""
         100% { background-image: linear-gradient(rgba(5, 5, 10, 0.25), rgba(5, 5, 10, 0.35)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
     }
 
-    /* Desktop & Laptop: Set to 'contain' so the image fits fully without cropping */
     .stApp {
         background-size: contain !important;
         background-position: center center !important;
@@ -66,7 +65,50 @@ st.markdown("""
         background-color: #05050a !important;
     }
 
-    /* Mobile & Tablet adjustment */
+    /* --- FLOATING SHADOW KNIGHT COMPANION STYLES --- */
+    @keyframes floatAnimation {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+    }
+
+    .shadow-companion {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        animation: floatAnimation 4s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    .shadow-avatar {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #00e5ff;
+        box-shadow: 0 0 15px #00e5ff, inset 0 0 10px #8a2be2;
+        background-color: #000;
+        pointer-events: auto;
+    }
+
+    .shadow-bubble {
+        margin-bottom: 8px;
+        background: rgba(5, 5, 10, 0.85);
+        border: 1px solid #00e5ff;
+        color: #00e5ff;
+        padding: 5px 10px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+        white-space: nowrap;
+        pointer-events: auto;
+    }
+
     @media (max-width: 768px) {
         .stApp {
             background-size: 100% 100% !important;
@@ -74,6 +116,14 @@ st.markdown("""
         .block-container {
             padding-left: 0.5rem;
             padding-right: 0.5rem;
+        }
+        .shadow-companion {
+            bottom: 10px;
+            right: 10px;
+        }
+        .shadow-avatar {
+            width: 70px;
+            height: 70px;
         }
     }
 
@@ -116,6 +166,12 @@ st.markdown("""
         box-shadow: 0 0 15px #00e5ff;
     }
 </style>
+
+<!-- Floating Shadow Knight Widget Injection -->
+<div class="shadow-companion">
+    <div class="shadow-bubble">"My Liege, fulfill your daily quests."</div>
+    <img src="https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/companion.png.jpeg" class="shadow-avatar" alt="Shadow Guard">
+</div>
 """, unsafe_allow_html=True)
 
 st.title("🗡 SYSTEM: PLAYER AWAKENING")
