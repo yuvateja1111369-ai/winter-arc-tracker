@@ -33,7 +33,7 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- SOLO LEVELING 4K / 3D THEME & WATERMARK CSS ---
+# --- SOLO LEVELING THEME & WATERMARK CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
@@ -62,7 +62,6 @@ st.markdown("""
         opacity: 0.25;
     }
 
-    /* Ensure app elements float above watermark */
     .main .block-container {
         position: relative;
         z-index: 1;
@@ -110,10 +109,10 @@ st.markdown("""
 st.title("🗡 SYSTEM: PLAYER AWAKENING")
 st.markdown("<p style='text-align: center; font-size: 20px; color: #a200ff;'>[ SYSTEM ACTIVE: OCT 1, 2026 – DEC 31, 2026 ]</p>", unsafe_allow_html=True)
 
-# --- 4K / 3D ANIMATED BANNER (SOLO LEVELING AURA) ---
+# --- STABLE ANIME BANNER ---
 st.markdown("""
 <div style="display: flex; justify-content: center; margin-bottom: 20px;">
-    <iframe src="https://giphy.com/embed/1va11UvJ1Z3K8" width="100%" height="280" style="max-width: 750px; border-radius: 4px; border: 1px solid #00e5ff; box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
+    <img src="https://media.giphy.com/media/1va11UvJ1Z3K8/giphy.gif" style="max-width: 100%; height: 260px; border-radius: 4px; border: 1px solid #00e5ff; box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);">
 </div>
 """, unsafe_allow_html=True)
 
