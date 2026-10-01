@@ -113,7 +113,7 @@ st.markdown("<p style='text-align: center; font-size: 20px; color: #a200ff;'>[ S
 # --- 4K / 3D ANIMATED BANNER (SOLO LEVELING AURA) ---
 st.markdown("""
 <div style="display: flex; justify-content: center; margin-bottom: 20px;">
-    <iframe src="https://giphy.com/embed/1JVkWyO7JgZlX5oH55" width="100%" height="280" style="max-width: 750px; border-radius: 4px; border: 1px solid #00e5ff; box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
+    <iframe src="https://giphy.com/embed/1va11UvJ1Z3K8" width="100%" height="280" style="max-width: 750px; border-radius: 4px; border: 1px solid #00e5ff; box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
 </div>
 """, unsafe_allow_html=True)
 
