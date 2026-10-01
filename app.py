@@ -94,7 +94,7 @@ LOCKED_RULES = [
 
 days = [str(i) for i in range(1, 32)]
 
-# --- INITIALIZE STATE & LOAD FROM SUPABASE ---
+# --- INITIALIZE STATE & AUTO-SEED 16 RULES TO SUPABASE IF EMPTY ---
 if "tracker_df" not in st.session_state:
     initial_habits = [
         "WORK OUT 5-6 TIMES A WEEK", "DRINK 1 GALLON OF WATER DAILY", 
@@ -105,13 +105,18 @@ if "tracker_df" not in st.session_state:
         "NO EXCUSES", "NOTHING BUT 90 DAYS OF PURE DISCIPLINE"
     ]
     
-    # Try fetching saved habits from Supabase cloud database
     loaded_habits = []
     if user_id:
         try:
             res = supabase.table("habits").select("name").eq("user_id", user_id).execute()
             if res.data:
                 loaded_habits = [row["name"] for row in res.data]
+            
+            # If database has no habits yet, auto-insert all 16 official rules!
+            if not loaded_habits:
+                for habit in initial_habits:
+                    supabase.table("habits").insert({"user_id": user_id, "name": habit}).execute()
+                loaded_habits = initial_habits
         except Exception:
             pass
             
@@ -187,7 +192,6 @@ edited_df = st.data_editor(
     }
 )
 
-# Detect changes and save back to session state
 st.session_state.tracker_df = edited_df
 
 # --- INTERACTIVE LIVE CHART ---
