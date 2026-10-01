@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import json
+from datetime import datetime
 from supabase import create_client, Client
 
 # Configure the page
@@ -83,7 +84,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🗡 SYSTEM: PLAYER AWAKENING")
-st.markdown("<p style='text-align: center; font-size: 20px; color: #a200ff;'>[ CLOUD SYNC ACTIVE: 90 DAYS OF PURE DISCIPLINE ]</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 20px; color: #a200ff;'>[ LIVE CALENDAR: OCT 1, 2026 – DEC 31, 2026 ]</p>", unsafe_allow_html=True)
 st.divider()
 
 LOCKED_RULES = [
@@ -93,7 +94,9 @@ LOCKED_RULES = [
     "WAKE UP BY 5 AM", "NO EXCUSES", "NOTHING BUT 90 DAYS OF PURE DISCIPLINE"
 ]
 
-days = [str(i) for i in range(1, 32)]
+# Generate exact calendar date strings from Oct 1, 2026 to Dec 31, 2026
+date_range = pd.date_range(start="2026-10-01", end="2026-12-31")
+days = [d.strftime("%b %d") for d in date_range]
 
 # --- LOAD HABITS & PROGRESS FROM SUPABASE ---
 if "tracker_df" not in st.session_state:
@@ -178,8 +181,8 @@ with col1:
         if add_submitted and new_habit:
             if new_habit not in st.session_state.tracker_df["Habit Name"].values:
                 new_row = {"Habit Name": new_habit}
-                for i in range(1, 32):
-                    new_row[str(i)] = False
+                for day in days:
+                    new_row[day] = False
                 new_df = pd.DataFrame([new_row])
                 st.session_state.tracker_df = pd.concat([st.session_state.tracker_df, new_df], ignore_index=True)
                 
@@ -238,7 +241,7 @@ edited_sleep_df = st.data_editor(
 )
 st.session_state.sleep_df = edited_sleep_df
 
-# --- HANDLE MANUAL SAVE BUTTON CLICK (SAFE INSERT/UPDATE) ---
+# --- HANDLE MANUAL SAVE BUTTON CLICK ---
 if save_clicked and user_id:
     try:
         # Save Habits
@@ -246,7 +249,6 @@ if save_clicked and user_id:
             habit_name = row["Habit Name"]
             day_dict = {day: bool(row[day]) for day in days}
             
-            # Check if row exists, then update or insert safely
             existing = supabase.table("habits").select("name").eq("user_id", user_id).eq("name", habit_name).execute()
             if existing.data:
                 supabase.table("habits").update({"progress_json": json.dumps(day_dict)}).eq("user_id", user_id).eq("name", habit_name).execute()
@@ -277,7 +279,7 @@ fig = px.line(
     x=daily_totals.index, 
     y=daily_totals.values, 
     markers=True,
-    labels={"x": "DAY", "y": "QUESTS COMPLETED"}
+    labels={"x": "DATE", "y": "QUESTS COMPLETED"}
 )
 
 fig.update_layout(
@@ -292,7 +294,7 @@ fig.update_layout(
 fig.update_traces(
     line=dict(color="#00e5ff", width=3), 
     marker=dict(size=10, color="#a200ff", line=dict(width=2, color="#00e5ff")),
-    hovertemplate="Day %{x}<br>Completed: %{y}<extra></extra>"
+    hovertemplate="%{x}<br>Completed: %{y}<extra></extra>"
 )
 
 st.plotly_chart(fig, use_container_width=True)
