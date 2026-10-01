@@ -31,7 +31,7 @@ def authenticate_user():
 
 user_id = authenticate_user()
 
-# --- ROAMING 3D IGRIS COMPANION CSS & JS ---
+# --- THEME & BACKGROUND SLIDESHOW CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
@@ -61,42 +61,6 @@ st.markdown("""
         height: 100vh !important;
         overflow-y: auto !important;
         background-color: #05050a !important;
-    }
-
-    /* --- ROAMING 3D IGRIS WIDGET --- */
-    #roaming-igris {
-        position: fixed;
-        width: 100px;
-        height: 100px;
-        z-index: 999999;
-        pointer-events: none;
-        transition: transform 0.1s ease-out;
-        will-change: left, top, transform;
-    }
-
-    .igris-avatar {
-        width: 90px;
-        height: 90px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid #00e5ff;
-        box-shadow: 0 0 20px #00e5ff, inset 0 0 10px #8a2be2;
-        background-color: #000;
-    }
-
-    .igris-bubble {
-        position: absolute;
-        bottom: 95px;
-        left: -20px;
-        background: rgba(5, 5, 10, 0.9);
-        border: 1px solid #00e5ff;
-        color: #00e5ff;
-        padding: 4px 8px;
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
-        white-space: nowrap;
     }
 
     h1 {
@@ -138,77 +102,6 @@ st.markdown("""
         box-shadow: 0 0 15px #00e5ff;
     }
 </style>
-
-<!-- Roaming 3D Igris DOM Element -->
-<div id="roaming-igris">
-    <div class="igris-bubble" id="igris-text">"My Liege is watching..."</div>
-    <img src="https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/companion.png.jpeg" class="igris-avatar" alt="Igris">
-</div>
-
-<script>
-    // JavaScript Roaming & 3D Tilt Engine for Igris
-    const igris = document.getElementById('roaming-igris');
-    const bubble = document.getElementById('igris-text');
-
-    let posX = window.innerWidth - 150;
-    let posY = window.innerHeight - 150;
-    let targetX = posX;
-    let targetY = posY;
-    
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
-
-    // Track mouse position smoothly
-    window.addEventListener('mousemove', (e) => {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-    });
-
-    // Periodically pick a new random spot on screen for Igris to roam to
-    setInterval(() => {
-        targetX = Math.random() * (window.innerWidth - 150) + 50;
-        targetY = Math.random() * (window.innerHeight - 200) + 50;
-        
-        const quotes = [
-            "\"My Liege, fulfill your quests!\"",
-            "\"Penalty quest avoided? Good.\"",
-            "\"Shadow monarch's domain.\"",
-            "\"Discipline is absolute.\""
-        ];
-        bubble.innerText = quotes[Math.floor(Math.random() * quotes.length)];
-    }, 6000);
-
-    // Animation loop for smooth roaming and 3D tilting toward the mouse cursor
-    function roamLoop() {
-        // Smooth glide toward target destination
-        posX += (targetX - posX) * 0.03;
-        posY += (targetY - posY) * 0.03;
-
-        // Calculate 3D tilt based on mouse relative to Igris position
-        let dx = mouseX - posX;
-        let dy = mouseY - posY;
-        let tiltX = (dy / window.innerHeight) * 30;
-        let tiltY = (dx / window.innerWidth) * -30;
-
-        igris.style.left = posX + 'px';
-        igris.style.top = posY + 'px';
-        igris.style.transform = `perspective(600px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.05)`;
-
-        requestAnimationFrame(roamLoop);
-    }
-    roamLoop();
-
-    // React when any button is clicked on screen
-    document.addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
-            bubble.innerText = "\"Quest action registered!\"";
-            igris.style.transform += " scale(1.2)";
-            setTimeout(() => {
-                igris.style.transform = "scale(1)";
-            }, 300);
-        }
-    });
-</script>
 """, unsafe_allow_html=True)
 
 st.title("🗡 SYSTEM: PLAYER AWAKENING")
