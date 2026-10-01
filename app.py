@@ -118,7 +118,7 @@ LOCKED_RULES = [
 date_range = pd.date_range(start="2026-10-01", end="2026-12-31")
 days = [d.strftime("%b %d") for d in date_range]
 
-# --- LOAD HABITS & PROGRESS FROM SUPABASE ---
+# --- LOAD HABITS & PROGRESS FROM SUPABASE (ISOLATED BY user_id) ---
 if "tracker_df" not in st.session_state:
     initial_habits = [
         "WORK OUT 5-6 TIMES A WEEK", "DRINK 1 GALLON OF WATER DAILY", 
@@ -133,11 +133,11 @@ if "tracker_df" not in st.session_state:
     progress_map = {}
     if user_id:
         try:
+            # STRICT FILTER: Only pull rows matching the logged-in user_id
             res = supabase.table("habits").select("name, progress_json").eq("user_id", user_id).execute()
             if res.data:
                 for row in res.data:
                     h_name = row["name"]
-                    # Ignore the removed habit if it still exists in Supabase database
                     if h_name == "NOTHING BUT 90 DAYS OF PURE DISCIPLINE":
                         try:
                             supabase.table("habits").delete().eq("user_id", user_id).eq("name", h_name).execute()
@@ -165,12 +165,13 @@ if "tracker_df" not in st.session_state:
     df.insert(0, "Habit Name", habits_list)
     st.session_state.tracker_df = df
 
-# --- LOAD SLEEP RECORDS FROM SUPABASE HABITS TABLE ---
+# --- LOAD SLEEP RECORDS FROM SUPABASE (ISOLATED BY user_id) ---
 if "sleep_df" not in st.session_state:
     sleep_rows = ["10 hrs", "8 hrs", "6 hrs", "4 hrs", "2 hrs"]
     loaded_sleep = {}
     if user_id:
         try:
+            # STRICT FILTER: Only pull sleep rows matching the logged-in user_id
             res = supabase.table("habits").select("name, progress_json").eq("user_id", user_id).execute()
             if res.data:
                 for row in res.data:
@@ -216,6 +217,7 @@ with col1:
                 
                 if user_id:
                     try:
+                        # Insert with user_id binding
                         supabase.table("habits").insert({"user_id": user_id, "name": new_habit, "progress_json": "{}"}).execute()
                     except Exception as err:
                         st.error(f"Cloud sync error: {err}")
@@ -232,6 +234,7 @@ with col2:
             st.session_state.tracker_df = st.session_state.tracker_df[st.session_state.tracker_df["Habit Name"] != habit_to_remove]
             if user_id:
                 try:
+                    # Delete restricted strictly to user_id and habit name
                     supabase.table("habits").delete().eq("user_id", user_id).eq("name", habit_to_remove).execute()
                 except Exception:
                     pass
@@ -269,9 +272,10 @@ edited_sleep_df = st.data_editor(
 )
 st.session_state.sleep_df = edited_sleep_df
 
-# --- HANDLE MANUAL SAVE BUTTON CLICK ---
+# --- HANDLE MANUAL SAVE BUTTON CLICK (STRICTLY ISOLATED BY user_id) ---
 if save_clicked and user_id:
     try:
+        # Save Habits with strict user_id scoping
         for _, row in st.session_state.tracker_df.iterrows():
             habit_name = row["Habit Name"]
             day_dict = {day: bool(row[day]) for day in days}
@@ -282,6 +286,7 @@ if save_clicked and user_id:
             else:
                 supabase.table("habits").insert({"user_id": user_id, "name": habit_name, "progress_json": json.dumps(day_dict)}).execute()
             
+        # Save Sleep Records with strict user_id scoping
         for _, row in st.session_state.sleep_df.iterrows():
             sleep_hours = row["Sleep Hours"]
             db_name = f"SLEEP_{sleep_hours}"
