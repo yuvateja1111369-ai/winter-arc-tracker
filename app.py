@@ -81,7 +81,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🗡️️ SYSTEM: PLAYER AWAKENING")
+st.title("🗡 SYSTEM: PLAYER AWAKENING")
 st.markdown("<p style='text-align: center; font-size: 20px; color: #a200ff;'>[ CLOUD SYNC ACTIVE: 90 DAYS OF PURE DISCIPLINE ]</p>", unsafe_allow_html=True)
 st.divider()
 
@@ -94,6 +94,7 @@ LOCKED_RULES = [
 
 days = [str(i) for i in range(1, 32)]
 
+# --- INITIALIZE STATE & LOAD FROM SUPABASE ---
 if "tracker_df" not in st.session_state:
     initial_habits = [
         "WORK OUT 5-6 TIMES A WEEK", "DRINK 1 GALLON OF WATER DAILY", 
@@ -103,9 +104,21 @@ if "tracker_df" not in st.session_state:
         "WAKE UP BY 5 AM", "GO TO SLEEP BY 8 PM", "FOCUS ON YOURSELF", 
         "NO EXCUSES", "NOTHING BUT 90 DAYS OF PURE DISCIPLINE"
     ]
-    grid_data = {day: [False] * len(initial_habits) for day in days}
+    
+    # Try fetching saved habits from Supabase cloud database
+    loaded_habits = []
+    if user_id:
+        try:
+            res = supabase.table("habits").select("name").eq("user_id", user_id).execute()
+            if res.data:
+                loaded_habits = [row["name"] for row in res.data]
+        except Exception:
+            pass
+            
+    habits_list = loaded_habits if loaded_habits else initial_habits
+    grid_data = {day: [False] * len(habits_list) for day in days}
     df = pd.DataFrame(grid_data)
-    df.insert(0, "Habit Name", initial_habits)
+    df.insert(0, "Habit Name", habits_list)
     st.session_state.tracker_df = df
 
 if "sleep_df" not in st.session_state:
@@ -131,7 +144,7 @@ with col1:
                 new_df = pd.DataFrame([new_row])
                 st.session_state.tracker_df = pd.concat([st.session_state.tracker_df, new_df], ignore_index=True)
                 
-                # Sync new habit to Supabase if user is logged in
+                # Sync new habit to Supabase
                 if user_id:
                     try:
                         supabase.table("habits").insert({"user_id": user_id, "name": new_habit}).execute()
@@ -147,13 +160,18 @@ with col2:
         remove_submitted = st.form_submit_button("DELETE")
         if remove_submitted and habit_to_remove:
             st.session_state.tracker_df = st.session_state.tracker_df[st.session_state.tracker_df["Habit Name"] != habit_to_remove]
+            if user_id:
+                try:
+                    supabase.table("habits").delete().eq("user_id", user_id).eq("name", habit_to_remove).execute()
+                except Exception:
+                    pass
             st.rerun()
 
 st.session_state.tracker_df["Completion Rate"] = (st.session_state.tracker_df[days].sum(axis=1) / len(days)) * 100
 cols = ["Habit Name", "Completion Rate"] + days
 st.session_state.tracker_df = st.session_state.tracker_df[cols]
 
-st.session_state.tracker_df = st.data_editor(
+edited_df = st.data_editor(
     st.session_state.tracker_df,
     hide_index=True,
     use_container_width=True,
@@ -168,6 +186,9 @@ st.session_state.tracker_df = st.data_editor(
         )
     }
 )
+
+# Detect changes and save back to session state
+st.session_state.tracker_df = edited_df
 
 # --- INTERACTIVE LIVE CHART ---
 st.subheader("📈 PLAYER MOMENTUM")
