@@ -38,9 +38,11 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
 
-    html, body, [class*="css"] {
+    html, body {
         font-family: 'Rajdhani', sans-serif !important;
         color: #00e5ff !important;
+        height: 100%;
+        overflow: auto;
     }
 
     @keyframes slideShow {
@@ -52,13 +54,14 @@ st.markdown("""
         100% { background-image: linear-gradient(rgba(5, 5, 10, 0.35), rgba(5, 5, 10, 0.45)), url('https://raw.githubusercontent.com/yuvateja1111369-ai/winter-arc-tracker/main/bg1.jpg.jpg'); }
     }
 
-    /* Allows background to scroll naturally with the page and fits mobile screens */
+    /* Enables full page scrolling with the background image moving naturally */
     .stApp {
         background-size: cover;
-        background-position: center center;
+        background-position: center top;
         background-repeat: no-repeat;
-        background-attachment: scroll;
+        background-attachment: scroll !important;
         animation: slideShow 900s infinite;
+        min-height: 100vh;
     }
 
     h1 {
@@ -100,7 +103,6 @@ st.markdown("""
         box-shadow: 0 0 15px #00e5ff;
     }
     
-    /* Mobile optimization adjustments */
     @media (max-width: 768px) {
         .block-container {
             padding-left: 0.5rem;
